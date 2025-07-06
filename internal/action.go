@@ -32,6 +32,7 @@ func ClickMouse(completed chan bool) {
 
 func MoveMouseAndClick(x int, y int, completed chan bool) {
 	robotgo.Move(x, y)
+	time.Sleep(25 * time.Millisecond) 
 	robotgo.Click()
 	if completed != nil {
 		completed <- true
@@ -59,7 +60,12 @@ func ActivateWindow(window string, completed chan bool) {
 }
 
 func KeyboardType(text string, completed chan bool) {
-	robotgo.TypeStr(text)
+	// slice the string into  an array of single characters
+	for _, char := range text {
+		robotgo.KeyPress(string(char))
+		time.Sleep(50 * time.Millisecond) // add a small delay between each character
+	}
+
 	if completed != nil {
 		completed <- true
 	}
@@ -89,4 +95,22 @@ func PressKey(key string, completed chan bool) {
 	if completed != nil {
 		completed <- true
 	}
+}
+
+func ClickDragTo(x1, y1, x2, y2 int, completed chan bool) {
+    // Move to starting point
+    robotgo.Move(x1, y1)
+    robotgo.MilliSleep(10)
+
+    robotgo.Toggle("left")          // equivalent to pressing down :contentReference[oaicite:2]{index=2}
+    robotgo.MilliSleep(50)
+
+    robotgo.DragSmooth(x2, y2)      // smoothly move mouse while holding :contentReference[oaicite:3]{index=3}
+
+    robotgo.Toggle("left", "up")    // release :contentReference[oaicite:4]{index=4}
+
+    // Signal completion
+    if completed != nil {
+        completed <- true
+    }
 }
