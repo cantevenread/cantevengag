@@ -233,7 +233,7 @@ func OpenSeedShop(completion chan bool) (timer int) {
 		}
 	}
 
-	seedSellerChan := img.FindTemplateOnScreenAsync("./img/png/gag_seed_shop.png", 0.6)
+	seedSellerChan := img.FindTemplateOnScreenAsync("./img/png/gag_seed_shop.png", 0.5)
 
 	seedSeller := <-seedSellerChan
 
@@ -250,7 +250,7 @@ func OpenSeedShop(completion chan bool) (timer int) {
 	time.Sleep(2 * time.Second)
 
 	// make sure the seed shop is open
-	verifySeedShopChan := img.FindTemplateOnScreenAsync("./img/png/gag_verify_seed_shop.png", 0.6)
+	verifySeedShopChan := img.FindTemplateOnScreenAsync("./img/png/gag_verify_seed_shop.png", 0.5)
 	verifySeedShop := <-verifySeedShopChan
 	if verifySeedShop.Err != nil {
 		fmt.Println("cantevengag: seed shop not found", verifySeedShop.Err)
