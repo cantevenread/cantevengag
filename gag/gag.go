@@ -36,8 +36,10 @@ func GAGHome(completed chan bool) {
 		go internal.MoveMouseTo(gardenButton.Coord.X, gardenButton.Coord.Y, moved)
 		if <-moved {
 			internal.ClickMouse(nil)
+			fmt.Println("cantevengag: returned to garden")
 			completed <- true
 		}
+	
 	}
 }
 
@@ -81,9 +83,40 @@ func GAGInit(completion chan bool) {
 	if <-moved {
 		internal.ClickMouse(nil)
 	}
+
+	// deactivate chat and leaderboard
+	chatChan := img.FindTemplateOnScreenAsync("./img/png/rblx_chat_on.png", 0.8)
+	chat := <-chatChan
+	if chat.Completed {
+		fmt.Println("cantevengag: chat is on, turning it off")
+		internal.MoveMouseTo(chat.Coord.X, chat.Coord.Y, nil)
+		time.Sleep(100 * time.Millisecond)
+		internal.ClickMouse(nil)
+	} else {
+		fmt.Println("cantevengag: chat is off")
+	}
+
+	time.Sleep(100 * time.Millisecond)
+	leaderboardChan := img.FindTemplateOnScreenAsync("./img/png/rblx_leaderboard_on.png", 0.8)
+	leaderboard := <-leaderboardChan
+	if leaderboard.Completed {
+		fmt.Println("cantevengag: leaderboard is on, turning it off")
+		internal.PressKey("tab", nil) // this toggles the leaderboard
+		time.Sleep(100 * time.Millisecond)
+	} else {
+		fmt.Println("cantevengag: leaderboard is off")
+	}
+
+
+
+
+
+
 	// check if hotbar number 2 slot is emopty
 
 	internal.PressKey("`", nil)
+
+	// check is search is open
 
 	secondSlotChan := img.FindTemplateOnScreenAsync("./img/png/gag_empty_slot2.png", 0.7)
 	secondSlot := <-secondSlotChan
@@ -233,7 +266,7 @@ func OpenSeedShop(completion chan bool) (timer int) {
 		}
 	}
 
-	seedSellerChan := img.FindTemplateOnScreenAsync("./img/png/gag_seed_shop.png", 0.5)
+	seedSellerChan := img.FindTemplateOnScreenAsync("./img/png/gag_seed_shop.png", 0.65)
 
 	seedSeller := <-seedSellerChan
 
@@ -250,7 +283,7 @@ func OpenSeedShop(completion chan bool) (timer int) {
 	time.Sleep(2 * time.Second)
 
 	// make sure the seed shop is open
-	verifySeedShopChan := img.FindTemplateOnScreenAsync("./img/png/gag_verify_seed_shop.png", 0.5)
+	verifySeedShopChan := img.FindTemplateOnScreenAsync("./img/png/gag_verify_seed_shop.png", 0.62)
 	verifySeedShop := <-verifySeedShopChan
 	if verifySeedShop.Err != nil {
 		fmt.Println("cantevengag: seed shop not found", verifySeedShop.Err)
@@ -273,32 +306,53 @@ func OpenSeedShop(completion chan bool) (timer int) {
 		channels[label] = img.FindTemplateOnScreenAsync(path, 0.8)
 	}
 
-	allFalse := true
-	for label, ch := range channels {
-		result := <-ch
-		// fmt.Printf("%s: %v\n", label, result)
-		if result.Completed {
-			allFalse = false
-			if labelInt, err := strconv.Atoi(label); err == nil {
-				fmt.Printf("cantevengag: seed shop timer is %s minutes\n", label)
-				completion <- true
-				return 1 + labelInt
-			} else {
-				fmt.Printf("Error converting label to int: %v\n", err)
-				completion <- false
-				return 0
-			}
-		} else {
-			fmt.Println("cantevengag: seed shop timer is not " + label + " minutes, trying next timer")
-		}
-	}
+	var timerValue int
+    var timerFound bool
+	
+	// Normal check
+    for label, ch := range channels {
+        result := <-ch
+        // fmt.Printf("%s: %v\n", label, result)
+        if result.Completed {
+            timerFound = true
+            if labelInt, err := strconv.Atoi(label); err == nil {
+                timerValue = 1 + labelInt
+                fmt.Printf("cantevengag: seed shop timer is %s minutes\n", label)
+            } else {
+                fmt.Printf("Error converting label to int: %v\n", err)
+            }
+            break
+        } else {
+            fmt.Println("cantevengag: seed shop timer is not " + label + " minutes, trying next timer")
+        }
+    }
 
-	if allFalse {
-		completion <- true
-		fmt.Println("cantevengag: seed shop timer <1 minute, timer set to 1 minute")
-		return 1
-	}
+    if !timerFound {
+		time.Sleep(3 * time.Second)
+        // Re-check
+        for label, path := range timerPaths {
+            recheckChan := img.FindTemplateOnScreenAsync(path, 0.8)
+            recheckResult := <-recheckChan
+            if recheckResult.Completed {
+                timerFound = true
+                if labelInt, err := strconv.Atoi(label); err == nil {
+                    timerValue = 1 + labelInt
+                    fmt.Printf("cantevengag: re-checked seed shop timer is %s minutes\n", label)
+                } else {
+                    fmt.Printf("Error converting label to int: %v\n", err)
+                }
+                break
+            } 
+        }
+    }
 
-	completion <- false
-	return 0
+	if timerFound {
+        completion <- true
+        return timerValue
+    } else {
+        fmt.Println("cantevengag: seed shop timer <1 minute, timer set to 2 minutes")
+        completion <- true
+        return 2
+    }
+
 }

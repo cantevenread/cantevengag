@@ -14,6 +14,8 @@ func main() {
 	go gag.GAGInit(gagInitDone)
 	if !<-gagInitDone {
 		fmt.Println("cantevengag: could not initialize")
+		fmt.Println("Press Enter to exit...")
+		fmt.Scanln() // waits for user to press Enter
 		return
 	}
 	fmt.Println("cantevengag: initialized successfully")	

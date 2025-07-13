@@ -5,7 +5,7 @@ build:
 	go build  -o bin/cantevengagv2 main.go
 
 build-windows:
-	go build -o bin/cantevengagv2.exe main.go
+	
 
 clean:
 	rm -rf bin
